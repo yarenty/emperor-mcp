@@ -30,8 +30,9 @@ enterprise deployment, every open choice is a place two systems disagree at 3 a.
 
 Like the huddle, none of this contradicts the wider colony: a server built on `emperor-mcp`
 speaks standard MCP and works with every compliant client. The profile narrows the spec's
-options; it never breaks them. The full ruleset ships as a versioned profile document
-(PROFILE.md, in progress; `MCP_REQUIREMENTS.md` is its working draft).
+options; it never breaks them. The full ruleset is **[the Emperor Profile (P1)](./PROFILE.md)**
+— ten numbered rules, each mapped to the MCP spec section it narrows, adds to, or restates,
+with the module that enforces it (or the policy that governs it) named explicitly.
 
 The name is also a nod to this crate's origin: it hatched in the
 [kowalski](https://github.com/yarenty/kowalski) rookery, where the penguins run in hordes.
@@ -76,7 +77,8 @@ Production consumers built on this framework:
 
 ## Authoring rules
 
-- [`MCP_REQUIREMENTS.md`](./MCP_REQUIREMENTS.md) — normative rules for servers built on this framework
+- [`PROFILE.md`](./PROFILE.md) — **the Emperor Profile (P1)**: the versioned deployment profile, rule by rule, with spec mapping and enforcement
+- [`MCP_REQUIREMENTS.md`](./MCP_REQUIREMENTS.md) — authoring checklist for servers built on this framework
 - [`MANIFEST_SPEC.md`](./MANIFEST_SPEC.md) — the `manifest.yaml` each server ships
 
 ## Build

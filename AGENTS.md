@@ -38,4 +38,7 @@ are the reference consumers.
 ## Documentation closure
 
 Update this file, `README.md`, `MCP_REQUIREMENTS.md`, and downstream consumers' docs when
-behavior changes. The versioned deployment profile (PROFILE.md) formalizes the hard rules.
+behavior changes. The hard rules are formalized in [`PROFILE.md`](./PROFILE.md) (Emperor
+Profile P1, mapped to MCP spec 2025-06-18): behavior changes that touch a profile rule
+require a profile version review. Known P1 gap: E5 in-process origin validation option
+(planned 0.2, together with the P2 profile for spec revision 2026-07-28).

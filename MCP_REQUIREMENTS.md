@@ -1,6 +1,6 @@
 # MCP requirements (servers built on emperor-mcp)
 
-> Normative rules for MCP servers built on this framework. Working draft of the versioned deployment profile (PROFILE.md).
+> Authoring checklist for MCP servers built on this framework. The normative, versioned ruleset with spec mapping is [PROFILE.md](./PROFILE.md) (Emperor Profile P1); this file is its practical companion.
 
 
 ## 1. Summary (the rules)
