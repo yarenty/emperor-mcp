@@ -10,7 +10,7 @@ repository = "https://github.com/yarenty/emperor-mcp"
 homepage = "https://github.com/yarenty/emperor-mcp"
 documentation = "https://docs.rs/emperor-mcp"
 readme = "README.md"
-keywords = ["mcp", "model-context-protocol", "server", "framework", "llm"]
+keywords = ["mcp", "mcp-server", "server", "framework", "llm"]
 categories = ["network-programming", "web-programming::http-server", "asynchronous"]
 
 [package.metadata.docs.rs]
