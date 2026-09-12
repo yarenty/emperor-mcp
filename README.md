@@ -3,7 +3,7 @@
 [![CI](https://github.com/yarenty/emperor-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/yarenty/emperor-mcp/actions/workflows/ci.yml)
 [![crates.io](https://img.shields.io/crates/v/emperor-mcp.svg)](https://crates.io/crates/emperor-mcp)
 [![docs.rs](https://img.shields.io/docsrs/emperor-mcp)](https://docs.rs/emperor-mcp)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![license](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 
 **The enterprise MCP server framework for Rust — Streamable HTTP first, credential forwarding,
 audited framing.**
@@ -161,6 +161,19 @@ cargo build --examples && ./scripts/smoke.sh  # example server round-trip
 
 **MSRV:** Rust 1.85 (edition 2024), declared via `rust-version` in `Cargo.toml`.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md): run the checks, keep the docs in step, and sign off
+your commits (DCO, `git commit -s`).
+
 ## License
 
-MIT
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in
+emperor-mcp by you shall be dual licensed as above, without any additional terms or conditions.

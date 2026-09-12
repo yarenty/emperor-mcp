@@ -1,6 +1,6 @@
 # emperor-mcp — AI agent notes
 
-**Crate**: `emperor-mcp` · **Version**: 0.1.0 (pre-publish)
+**Crate**: `emperor-mcp` · **Version**: 0.1.0 (on crates.io) · **Licence**: MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`; keep `Cargo.toml`, the README badge and the licence section in agreement; contributions are signed off, see `CONTRIBUTING.md`)
 
 ## Scope
 

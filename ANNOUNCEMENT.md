@@ -53,7 +53,7 @@ Concretely, the framework gives you:
 - **A complete server in under 100 lines** — `cargo add emperor-mcp`, implement one trait,
   serve.
 
-It's on [crates.io](https://crates.io/crates/emperor-mcp) as 0.1.0, MIT, MSRV 1.85, docs on
+It's on [crates.io](https://crates.io/crates/emperor-mcp) as 0.1.0, MIT or Apache-2.0, MSRV 1.85, docs on
 [docs.rs](https://docs.rs/emperor-mcp). The profile is honest about its own gaps (in-process
 origin validation lands in 0.2, and a P2 profile is planned for the 2026-07-28 spec revision).
 It hatched inside my [kowalski](https://github.com/yarenty/kowalski) agent framework, where
@@ -86,6 +86,6 @@ never contradicts. Fully compliant MCP, discipline included.
 Named after the only penguin that breeds through the Antarctic winter. It doesn't improvise;
 it follows protocol. So should your servers.
 
-crates.io: emperor-mcp · GitHub: github.com/yarenty/emperor-mcp · MIT
+crates.io: emperor-mcp · GitHub: github.com/yarenty/emperor-mcp · MIT or Apache-2.0
 
 #rust #mcp #modelcontextprotocol #ai #llm #opensource
