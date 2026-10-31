@@ -12,10 +12,13 @@
 //! 2. **[`serve::serve`]** — rmcp `ServerHandler` + `#[tool_router]` bootstrap at `/mcp` + `/health`,
 //!    with credential-forwarding middleware for multi-tenant deployments.
 //!
+//! Every server binary also ships a `doctor` subcommand built from [`doctor`] checks.
+//!
 //! See `MCP_REQUIREMENTS.md` and `MANIFEST_SPEC.md` in the repository root.
 
 #![warn(missing_docs)]
 
+pub mod doctor;
 pub mod framing;
 pub mod headers;
 pub mod serve;

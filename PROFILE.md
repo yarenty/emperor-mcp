@@ -51,7 +51,7 @@ is an independent, self-contained exchange.
   credential forwarding (E6) sound.
 - **Spec relation:** *narrows*. The spec says a server "**MAY** assign a session ID"
   (transports § Session Management); this profile forbids exercising that option.
-- **Enforcement:** by code. [`serve.rs`](src/serve.rs) pins `STATEFUL_MODE = false` (rmcp
+- **Enforcement:** by code. [`serve.rs`](src/serve.rs) pins `LEGACY_SESSION_MODE = false` (rmcp
   stateless mode + JSON responses); [`transport::http_router`](src/transport.rs) has no session
   concept at all. Regression-tested: `http_request_gets_json_reply_without_session_header`.
 
@@ -92,11 +92,11 @@ enforces `Origin` validation against DNS-rebinding.
 - **Spec relation:** *restates* the spec's Security Warning (Origin validation **MUST**,
   localhost binding **SHOULD**, authentication **SHOULD**) and *narrows* it into a concrete
   deployment shape.
-- **Enforcement:** by policy, and this is P1's **known code gap**: [`serve.rs`](src/serve.rs)
-  currently disables rmcp's in-process host validation (`disable_allowed_hosts`) under the
-  trusted-ingress assumption, and the examples bind `127.0.0.1`. A configuration option to
-  enforce origin/host validation in-process (for deployments without an ingress) is planned
-  for 0.2 — until then, running without a validating ingress is out of profile.
+- **Enforcement:** by policy behind an ingress, by code without one. [`serve.rs`](src/serve.rs)
+  leaves rmcp's in-process `Host`/`Origin` validation off by default (the ingress does it) and
+  turns it on when `ServeOptions::with_allowed_hosts` / `with_allowed_origins` name hosts or
+  origins (since 0.2). Regression-tested: `host_validation_refuses_unlisted_hosts_when_enabled`,
+  `origin_validation_refuses_foreign_origins_when_enabled`. The examples bind `127.0.0.1`.
 
 ### E6 — Credentials are forwarded, never stored
 
@@ -179,7 +179,7 @@ except transport-level failures, which use HTTP status codes.
 | E2 stateless | narrows: transports § Session Management ("MAY assign") | code: `serve.rs`, `transport.rs` + test |
 | E3 endpoints | restates single endpoint; adds `/health` | code (rmcp path) / policy (`McpHandler` path) |
 | E4 wire behavior | restates: transports § Sending Messages | code: `transport.rs` + tests |
-| E5 ingress & origin validation | restates Security Warning; narrows deployment shape | policy; **code gap tracked for 0.2** |
+| E5 ingress & origin validation | restates Security Warning; narrows deployment shape | policy behind an ingress; code: `ServeOptions` host/origin allow-lists + tests |
 | E6 credential forwarding | adds (spec silent on upstream credentials) | code: `headers.rs` + test; logging rule = policy |
 | E7 no auth shortcuts | adds | policy |
 | E8 output framing | adds (spec silent on prompt injection) | code: `framing.rs` + tests; application = policy |
@@ -194,7 +194,6 @@ except transport-level failures, which use HTTP status codes.
 - The **current** spec revision is [2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28),
   which replaces the initialize handshake with per-request version declaration
   (`MCP-Protocol-Version` header / `_meta`) and a mandatory `server/discover` RPC. **P2** will
-  cover that family (tracked with the framework's 0.2 milestone, together with the E5 origin
-  validation option).
+  cover that family (the framework is on rmcp 3, which speaks it; the profile text follows).
 - A profile version bump is required whenever a rule is added, removed, or its spec mapping
   changes. Servers declare the profile they target as "Emperor Profile P1".

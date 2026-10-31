@@ -14,6 +14,8 @@ Every new first-party MCP server **MUST**:
 5. Be built on **`emperor-mcp`** — do not reimplement transport, health, or framing.
 6. Have **no dev/test auth bypasses** — same code path in dev, CI, and production.
 7. Ship a **`manifest.yaml`** beside the crate.
+8. Expose **3 to 8 tools** — split a bigger surface into several servers (§11).
+9. Ship a **`doctor`** subcommand built on [`emperor_mcp::doctor`](src/doctor.rs) (§11).
 
 ## 2. Content-aware output framing (REQUIRED)
 
@@ -95,3 +97,18 @@ cargo build --examples && ./scripts/smoke.sh
 - [ ] `manifest.yaml` + README + AGENTS.md
 - [ ] Example `[[mcp.servers]]` block in `resources/config.toml`
 - [ ] Root `CHANGELOG.md` when user-visible
+- [ ] 3 to 8 tools, each name a verb on one noun (`read_message`, not `email_tool`)
+- [ ] `doctor` subcommand: configuration, credentials (never printed), upstream reachable, listen address free, tool budget
+
+## 11. Small tool surface and `doctor` (REQUIRED)
+
+**3 to 8 tools per server.** A model chooses well among a handful of tools and badly among thirty;
+every extra tool also costs context on every request. When a server grows past eight, split it by
+noun (mail reading vs mail sending, tasks vs projects) instead of adding a ninth.
+[`doctor::tool_budget`](src/doctor.rs) enforces the limit at `doctor` time; `MAX_TOOLS` is 8.
+
+**`doctor` subcommand.** `my-mcp doctor` checks what the server needs before it is started, prints
+one line per check and exits `1` when any check fails, so scripts and container health checks can
+use it. Build it from [`doctor::Report`](src/doctor.rs) and the generic checks (`port_free`,
+`env_set` — secrets show only their length —, `tcp_reachable`, `tool_budget`) plus the server's own
+(log in to the upstream, open the root folder, find the native library).
