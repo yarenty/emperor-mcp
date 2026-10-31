@@ -17,7 +17,7 @@
 //!
 //! See [`MCP_REQUIREMENTS.md`](../MCP_REQUIREMENTS.md) §2.
 //!
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::{CallToolResult, ContentBlock};
 use serde_json::Value;
 use uuid::Uuid;
 
@@ -135,7 +135,7 @@ pub fn structured_framed(kind: FrameKind, value: Value) -> CallToolResult {
     // the framed rendering. `content` is a public field; mutating it is allowed
     // even though the struct is #[non_exhaustive].
     let mut result = CallToolResult::structured(value);
-    result.content = vec![Content::text(framed)];
+    result.content = vec![ContentBlock::text(framed)];
     result
 }
 
