@@ -17,6 +17,9 @@ All notable changes to emperor-mcp. The format follows [Keep a Changelog](https:
 - **rmcp 3.8** (from 1.7). Public types from rmcp change with it: `framing` builds `ContentBlock` (was `Content`); handlers implement rmcp 3's `ServerHandler`.
 - Minimum Rust version is 1.88 (rmcp 3's own minimum).
 
+### Fixed
+- `init_tracing` logs to stderr instead of stdout, so a server on the stdio transport keeps its protocol stream clean (Emperor Profile E9).
+
 ## [0.1.0] - 2026-08-27
 
 ### Added
