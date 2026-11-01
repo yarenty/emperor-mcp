@@ -1,7 +1,7 @@
 //! `doctor`: an environment check every server binary ships as a subcommand.
 //!
 //! A server's `doctor` builds a [`Report`] from [`Check`]s (its own, plus the generic ones here:
-//! [`port_free`], [`env_set`], [`tcp_reachable`]), prints it, and exits with
+//! [`port_free`], [`env_set`], [`tcp_reachable`], [`dir_readable`], [`dir_writable`]), prints it, and exits with
 //! [`Report::exit_code`], so scripts and container health checks can rely on it.
 //!
 //! ```no_run
@@ -18,6 +18,7 @@
 
 use std::fmt;
 use std::net::SocketAddr;
+use std::path::Path;
 use std::time::Duration;
 
 /// Outcome of one check.
@@ -184,6 +185,50 @@ pub async fn tcp_reachable(name: &str, host: &str, port: u16, timeout: Duration)
     }
 }
 
+/// `path` is a directory whose entries can be listed (a root folder the server reads from).
+pub fn dir_readable(path: impl AsRef<Path>) -> Check {
+    let path = path.as_ref();
+    let name = format!("dir {}", path.display());
+    if !path.is_dir() {
+        return Check::fail(name, "not a directory or does not exist");
+    }
+    match std::fs::read_dir(path) {
+        Ok(entries) => Check::pass(name, format!("readable ({} entries)", entries.count())),
+        Err(e) => Check::fail(name, format!("cannot be listed: {e}")),
+    }
+}
+
+/// `path` is a directory the server can create files in: a uniquely named probe file is created
+/// and removed again.
+pub fn dir_writable(path: impl AsRef<Path>) -> Check {
+    let path = path.as_ref();
+    let name = format!("dir {}", path.display());
+    if !path.is_dir() {
+        return Check::fail(name, "not a directory or does not exist");
+    }
+    let probe = path.join(format!(".emperor-doctor-{}", uuid::Uuid::new_v4().simple()));
+    let created = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&probe);
+    match created {
+        Ok(file) => {
+            drop(file);
+            match std::fs::remove_file(&probe) {
+                Ok(()) => Check::pass(name, "writable"),
+                Err(e) => Check::warn(
+                    name,
+                    format!(
+                        "writable, but the probe {} was not removed: {e}",
+                        probe.display()
+                    ),
+                ),
+            }
+        }
+        Err(e) => Check::fail(name, format!("cannot create files: {e}")),
+    }
+}
+
 /// Most tools a server may expose (MCP_REQUIREMENTS §11): a model picks well from a handful of
 /// tools and badly from thirty.
 pub const MAX_TOOLS: usize = 8;
@@ -261,5 +306,44 @@ mod tests {
         drop(l);
         let gone = tcp_reachable("svc", "127.0.0.1", port, Duration::from_secs(2)).await;
         assert_eq!(gone.status, Status::Fail);
+    }
+
+    #[test]
+    fn dir_checks() {
+        let dir = std::env::temp_dir().join(format!("emperor-doctor-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&dir).unwrap();
+        std::fs::write(dir.join("a.txt"), "x").unwrap();
+        let r = dir_readable(&dir);
+        assert_eq!(r.status, Status::Pass, "{r:?}");
+        assert!(r.detail.contains("1 entries"), "{r:?}");
+        let w = dir_writable(&dir);
+        assert_eq!(w.status, Status::Pass, "{w:?}");
+        // The probe file is gone again.
+        assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+
+        let file = dir.join("a.txt");
+        assert_eq!(dir_readable(&file).status, Status::Fail);
+        assert_eq!(dir_writable(&file).status, Status::Fail);
+        let missing = dir.join("missing");
+        assert_eq!(dir_readable(&missing).status, Status::Fail);
+        assert_eq!(dir_writable(&missing).status, Status::Fail);
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_only_dir_is_not_writable() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("emperor-doctor-ro-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&dir).unwrap();
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o555)).unwrap();
+        // Root ignores permission bits; only assert when the probe really is refused.
+        let probe_refused = std::fs::write(dir.join("p"), "x").is_err();
+        let w = dir_writable(&dir);
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755)).unwrap();
+        if probe_refused {
+            assert_eq!(w.status, Status::Fail, "{w:?}");
+        }
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 }
