@@ -1,0 +1,269 @@
+{
+  "tools": [
+    {
+      "name": "comment",
+      "description": "Add a comment (Markdown) to a task.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Task id.",
+            "type": "integer"
+          },
+          "text": {
+            "description": "Comment text in Markdown.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "create_task",
+      "description": "Create a task in a project, with an optional Markdown description, labels (existing ones\nunless create_missing_labels is true), assignees by username, priority 0-5 and due date.",
+      "inputSchema": {
+        "properties": {
+          "assignees": {
+            "default": [],
+            "description": "Usernames to assign.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "create_missing_labels": {
+            "default": false,
+            "description": "Create labels that do not exist yet. Default false: an unknown label is an error.",
+            "type": "boolean"
+          },
+          "description": {
+            "description": "Description in Markdown.",
+            "type": "string"
+          },
+          "due": {
+            "description": "Due date, YYYY-MM-DD or ISO-8601.",
+            "type": "string"
+          },
+          "labels": {
+            "default": [],
+            "description": "Label titles. Labels must exist unless create_missing_labels is true.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "description": "Priority 0 to 5 (0 unset, 1 low, 2 medium, 3 high, 4 urgent, 5 do now).",
+            "type": "integer"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "description": "Project id.",
+                "type": "integer"
+              },
+              {
+                "description": "Project title (case-insensitive), or an id written as text.",
+                "type": "string"
+              }
+            ],
+            "description": "Project to create the task in (title or id)."
+          },
+          "title": {
+            "description": "Task title.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project",
+          "title"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_task",
+      "description": "Read one task: every field, the description as text, and its comments with author and\ndate (the 50 most recent; long text is cut).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Task id.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_projects",
+      "description": "List projects with id, title, parent project and number of open tasks (up to 100).",
+      "inputSchema": {
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_tasks",
+      "description": "List tasks, open ones by default, sorted by priority then due date. Filters: project,\nlabel, done, due_before, search; limit up to 100.",
+      "inputSchema": {
+        "properties": {
+          "done": {
+            "description": "Done tasks instead of open ones. Default false (open tasks).",
+            "type": "boolean"
+          },
+          "due_before": {
+            "description": "Only tasks due before this date (YYYY-MM-DD or ISO-8601).",
+            "type": "string"
+          },
+          "label": {
+            "description": "Only tasks with this label (title).",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Most tasks to return, 1 to 100 (default 50).",
+            "type": "integer"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "description": "Project id.",
+                "type": "integer"
+              },
+              {
+                "description": "Project title (case-insensitive), or an id written as text.",
+                "type": "string"
+              }
+            ],
+            "description": "Only tasks in this project (title or id)."
+          },
+          "search": {
+            "description": "Text to search for in titles and descriptions.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "update_task",
+      "description": "Change a task: any of title, description (Markdown, replaces the old one), done,\npriority, due (\"none\" clears it), add_labels / remove_labels, add_assignees /\nremove_assignees (usernames), or move it to another project.",
+      "inputSchema": {
+        "properties": {
+          "add_assignees": {
+            "default": [],
+            "description": "Usernames to assign.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "add_labels": {
+            "default": [],
+            "description": "Label titles to add. Labels must exist unless create_missing_labels is true.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "create_missing_labels": {
+            "default": false,
+            "description": "Create labels in add_labels that do not exist yet. Default false.",
+            "type": "boolean"
+          },
+          "description": {
+            "description": "New description in Markdown (replaces the old one).",
+            "type": "string"
+          },
+          "done": {
+            "description": "Mark done (true) or reopen (false).",
+            "type": "boolean"
+          },
+          "due": {
+            "description": "New due date (YYYY-MM-DD or ISO-8601), or \"none\" to clear it.",
+            "type": "string"
+          },
+          "id": {
+            "description": "Task id.",
+            "type": "integer"
+          },
+          "priority": {
+            "description": "New priority 0 to 5.",
+            "type": "integer"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "description": "Project id.",
+                "type": "integer"
+              },
+              {
+                "description": "Project title (case-insensitive), or an id written as text.",
+                "type": "string"
+              }
+            ],
+            "description": "Move the task to this project (title or id)."
+          },
+          "remove_assignees": {
+            "default": [],
+            "description": "Usernames to unassign.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "remove_labels": {
+            "default": [],
+            "description": "Label titles to remove.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "description": "New title.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    }
+  ]
+}

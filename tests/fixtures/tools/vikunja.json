@@ -1,0 +1,369 @@
+{
+  "tools": [
+    {
+      "name": "comment",
+      "description": "Add a comment (Markdown) to a task.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "id": {
+            "description": "Task id.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "text": {
+            "description": "Comment text in Markdown.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "create_task",
+      "description": "Create a task in a project, with an optional Markdown description, labels (existing ones\nunless create_missing_labels is true), assignees by username, priority 0-5 and due date.",
+      "inputSchema": {
+        "$defs": {
+          "ProjectRef": {
+            "anyOf": [
+              {
+                "description": "Project id.",
+                "format": "int64",
+                "type": "integer"
+              },
+              {
+                "description": "Project title (case-insensitive), or an id written as text.",
+                "type": "string"
+              }
+            ],
+            "description": "A project by numeric id or by title."
+          }
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "assignees": {
+            "default": [],
+            "description": "Usernames to assign.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "create_missing_labels": {
+            "default": false,
+            "description": "Create labels that do not exist yet. Default false: an unknown label is an error.",
+            "type": "boolean"
+          },
+          "description": {
+            "default": null,
+            "description": "Description in Markdown.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "due": {
+            "default": null,
+            "description": "Due date, YYYY-MM-DD or ISO-8601.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "labels": {
+            "default": [],
+            "description": "Label titles. Labels must exist unless create_missing_labels is true.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "priority": {
+            "default": null,
+            "description": "Priority 0 to 5 (0 unset, 1 low, 2 medium, 3 high, 4 urgent, 5 do now).",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "project": {
+            "$ref": "#/$defs/ProjectRef",
+            "description": "Project to create the task in (title or id)."
+          },
+          "title": {
+            "description": "Task title.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project",
+          "title"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_task",
+      "description": "Read one task: every field, the description as text, and its comments with author and\ndate (the 50 most recent; long text is cut).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "id": {
+            "description": "Task id.",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_projects",
+      "description": "List projects with id, title, parent project and number of open tasks (up to 100).",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_tasks",
+      "description": "List tasks, open ones by default, sorted by priority then due date. Filters: project,\nlabel, done, due_before, search; limit up to 100.",
+      "inputSchema": {
+        "$defs": {
+          "ProjectRef": {
+            "anyOf": [
+              {
+                "description": "Project id.",
+                "format": "int64",
+                "type": "integer"
+              },
+              {
+                "description": "Project title (case-insensitive), or an id written as text.",
+                "type": "string"
+              }
+            ],
+            "description": "A project by numeric id or by title."
+          }
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "done": {
+            "default": null,
+            "description": "Done tasks instead of open ones. Default false (open tasks).",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "due_before": {
+            "default": null,
+            "description": "Only tasks due before this date (YYYY-MM-DD or ISO-8601).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "default": null,
+            "description": "Only tasks with this label (title).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limit": {
+            "default": null,
+            "description": "Most tasks to return, 1 to 100 (default 50).",
+            "format": "uint",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "project": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only tasks in this project (title or id)."
+          },
+          "search": {
+            "default": null,
+            "description": "Text to search for in titles and descriptions.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "update_task",
+      "description": "Change a task: any of title, description (Markdown, replaces the old one), done,\npriority, due (\"none\" clears it), add_labels / remove_labels, add_assignees /\nremove_assignees (usernames), or move it to another project.",
+      "inputSchema": {
+        "$defs": {
+          "ProjectRef": {
+            "anyOf": [
+              {
+                "description": "Project id.",
+                "format": "int64",
+                "type": "integer"
+              },
+              {
+                "description": "Project title (case-insensitive), or an id written as text.",
+                "type": "string"
+              }
+            ],
+            "description": "A project by numeric id or by title."
+          }
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "properties": {
+          "add_assignees": {
+            "default": [],
+            "description": "Usernames to assign.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "add_labels": {
+            "default": [],
+            "description": "Label titles to add. Labels must exist unless create_missing_labels is true.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "create_missing_labels": {
+            "default": false,
+            "description": "Create labels in add_labels that do not exist yet. Default false.",
+            "type": "boolean"
+          },
+          "description": {
+            "default": null,
+            "description": "New description in Markdown (replaces the old one).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "done": {
+            "default": null,
+            "description": "Mark done (true) or reopen (false).",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "due": {
+            "default": null,
+            "description": "New due date (YYYY-MM-DD or ISO-8601), or \"none\" to clear it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "description": "Task id.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "priority": {
+            "default": null,
+            "description": "New priority 0 to 5.",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "project": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Move the task to this project (title or id)."
+          },
+          "remove_assignees": {
+            "default": [],
+            "description": "Usernames to unassign.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "remove_labels": {
+            "default": [],
+            "description": "Label titles to remove.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "default": null,
+            "description": "New title.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    }
+  ]
+}
