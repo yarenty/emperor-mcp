@@ -1,0 +1,240 @@
+{
+  "tools": [
+    {
+      "name": "edit",
+      "description": "Replace exact text in a text file: old_text must occur exactly once (copy it from read, whitespace included) unless replace_all is true.",
+      "inputSchema": {
+        "properties": {
+          "new_text": {
+            "description": "Replacement text (may be empty to delete old_text).",
+            "type": "string"
+          },
+          "old_text": {
+            "description": "Exact text to replace, whitespace included; must occur exactly once unless replace_all.",
+            "type": "string"
+          },
+          "path": {
+            "description": "Text file to change.",
+            "type": "string"
+          },
+          "replace_all": {
+            "default": false,
+            "description": "Replace every occurrence (default false).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "old_text",
+          "new_text"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list",
+      "description": "List files and directories in a folder. Skips hidden and .gitignored entries. Optional glob filter; recursive for subfolders.",
+      "inputSchema": {
+        "properties": {
+          "glob": {
+            "description": "Glob on paths as shown, e.g. \"*.md\" or \"src/**/*.rs\".",
+            "type": "string"
+          },
+          "max_entries": {
+            "description": "Most entries to return; capped by the server limit.",
+            "type": "integer"
+          },
+          "path": {
+            "description": "Directory to list; omit or \".\" for the top.",
+            "type": "string"
+          },
+          "recursive": {
+            "default": false,
+            "description": "Include subdirectories (default false: one level).",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "move",
+      "description": "Move or rename a file or directory. Refuses to replace an existing target unless overwrite is true.",
+      "inputSchema": {
+        "properties": {
+          "from": {
+            "description": "Existing file or directory.",
+            "type": "string"
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Replace an existing target (default false).",
+            "type": "boolean"
+          },
+          "to": {
+            "description": "New path; parent directories are created.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "read",
+      "description": "Read a text file, optionally only lines start_line..end_line (1-based, inclusive). Small PNG, JPEG, GIF and WebP images come back as images; other binary files are reported, not returned.",
+      "inputSchema": {
+        "properties": {
+          "end_line": {
+            "description": "Last line to return, inclusive (default: end of file).",
+            "type": "integer"
+          },
+          "path": {
+            "description": "File to read.",
+            "type": "string"
+          },
+          "start_line": {
+            "description": "First line to return, 1-based (default 1).",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "search",
+      "description": "Search text files for a regular expression; returns path, line number and line for each match. Optional start path, glob filter, ignore_case.",
+      "inputSchema": {
+        "properties": {
+          "glob": {
+            "description": "Glob on paths as shown, e.g. \"*.rs\".",
+            "type": "string"
+          },
+          "ignore_case": {
+            "default": false,
+            "description": "Match case-insensitively (default false).",
+            "type": "boolean"
+          },
+          "path": {
+            "description": "Directory or file to search; omit for everything.",
+            "type": "string"
+          },
+          "pattern": {
+            "description": "Regular expression (Rust regex syntax) matched against each line.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "stat",
+      "description": "Describe a path: kind (file, dir, symlink), size, modified time, line count for text files, image type for images.",
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "description": "Path to describe; \".\" for the top.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "write",
+      "description": "Write text to a file. mode: create (default, fails if it exists), overwrite, or append. Creates parent directories.",
+      "inputSchema": {
+        "properties": {
+          "content": {
+            "description": "Text to write.",
+            "type": "string"
+          },
+          "mode": {
+            "default": "create",
+            "description": "\"create\" (default, refuses an existing file), \"overwrite\" or \"append\".",
+            "oneOf": [
+              {
+                "const": "create",
+                "description": "Create a new file; refuse if it exists.",
+                "type": "string"
+              },
+              {
+                "const": "overwrite",
+                "description": "Replace the file's content, creating it if missing.",
+                "type": "string"
+              },
+              {
+                "const": "append",
+                "description": "Add to the end of the file, creating it if missing.",
+                "type": "string"
+              }
+            ]
+          },
+          "path": {
+            "description": "File to write; parent directories are created.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

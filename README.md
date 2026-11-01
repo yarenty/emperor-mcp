@@ -21,7 +21,7 @@ credentials, feeding output to models that must not mistake data for instruction
   delimiters — indirect prompt injection mitigated at the source.
 
 Every opinion is written down, versioned, and mapped to the spec section it narrows:
-**[the Emperor Profile (P1)](./PROFILE.md)**. A server built on `emperor-mcp` is a fully
+**[the Emperor Profile (P1.1)](./PROFILE.md)**. A server built on `emperor-mcp` is a fully
 compliant MCP server — the profile narrows the spec's options, it never breaks them.
 
 ## Five-minute quickstart
@@ -119,13 +119,22 @@ Now it stands on its own ice.
   (a clear JSON-RPC error on stdio)
 - **Limits** — [`Limits`](src/limits.rs): capped characters, results per call and download bytes,
   with hard ceilings; `truncate_chars` says what it left out
+- **Lean tool definitions** — [`schema`](src/schema.rs): one line,
+  `Self::tool_router().compact_schemas()`, strips JSON Schema boilerplate from `tools/list`
+  (`$schema`, `null` on optional arguments, `"default": null`, Rust integer formats, single-use
+  `$defs`) without losing a description, enum or real bound; 14 to 24% fewer bytes on the
+  servers below
+- **No write tool by default** — writing is switched on by the operator (`--writable` plus an
+  environment variable, [`cli::parse_switch`](src/cli.rs)); the profile requires it and
+  `testkit` checks it
 - **`doctor`** — [`doctor::Report`](src/doctor.rs) and generic checks for each server's `doctor`
   subcommand (listen address, env vars, TCP reachability, readable/writable directories, the
   8-tool budget)
 - **Optional features** — `cli`: [`ServeArgs`](src/cli.rs) to `#[command(flatten)]` into a
   server's clap parser (`--bind`, `--stdio`, `--allowed-host`, `--allowed-origin`); `testkit`:
   [`assert_tools`](src/testkit.rs) for a server's own tests (tool count, descriptions,
-  annotations, object input schemas)
+  annotations, object input schemas), `assert_read_only_default` (no write tool without the
+  switch) and `assert_compact_schemas`; descriptions over 300 characters are a warning
 
 A tool that forwards the caller's credentials and gets refused upstream:
 
@@ -185,7 +194,7 @@ are better: [docs/COMPARISON.md](docs/COMPARISON.md).
 
 ## Authoring rules
 
-- [`PROFILE.md`](./PROFILE.md) — **the Emperor Profile (P1)**: the versioned deployment profile, rule by rule, with spec mapping and enforcement
+- [`PROFILE.md`](./PROFILE.md) — **the Emperor Profile (P1.1)**: the versioned deployment profile, rule by rule, with spec mapping and enforcement
 - [`MCP_REQUIREMENTS.md`](./MCP_REQUIREMENTS.md) — authoring checklist for servers built on this framework
 - [`MANIFEST_SPEC.md`](./MANIFEST_SPEC.md) — the `manifest.yaml` each server ships
 

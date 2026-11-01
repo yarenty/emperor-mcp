@@ -1,0 +1,231 @@
+{
+  "tools": [
+    {
+      "name": "draft",
+      "description": "Save a message in the Drafts folder for a person to review and send. Always allowed.\nWith in_reply_to (a uid) it threads as a reply and defaults to the original sender.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "Message body in Markdown (plain text is fine). Sent as text/plain (as written) plus\ntext/html rendered from it; raw HTML is shown as text, images become links.",
+            "type": "string"
+          },
+          "cc": {
+            "default": [],
+            "description": "Cc recipients.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "folder": {
+            "description": "Folder of the in_reply_to message (default INBOX).",
+            "type": "string"
+          },
+          "in_reply_to": {
+            "description": "UID of the message this replies to; sets In-Reply-To and References.",
+            "type": "integer"
+          },
+          "subject": {
+            "description": "Subject (a reply defaults to \"Re: \" plus the original subject).",
+            "type": "string"
+          },
+          "to": {
+            "default": [],
+            "description": "Recipients, `ann@example.org` or `Ann <ann@example.org>`. May be empty for a reply (goes to\nthe original sender).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_folders",
+      "description": "List mail folders with their special use (drafts, sent, trash, ...) and message and unread\ncounts.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "read_attachment",
+      "description": "Read the text of one attachment of a message (text, HTML, PDF, DOCX, XLSX/XLS/ODS; other\ntypes return metadata only). Index comes from read_message.",
+      "inputSchema": {
+        "properties": {
+          "folder": {
+            "description": "Folder holding the message (default INBOX).",
+            "type": "string"
+          },
+          "index": {
+            "description": "Attachment index from read_message (starts at 0).",
+            "type": "integer"
+          },
+          "max_chars": {
+            "description": "Most characters to return (default 20000, at most 200000).",
+            "type": "integer"
+          },
+          "uid": {
+            "description": "UID from search.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uid",
+          "index"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "read_message",
+      "description": "Read one message: headers, plain-text body (HTML converted) and the attachment list\n(index, name, type, size). Leaves the message unread unless mark_read is true.",
+      "inputSchema": {
+        "properties": {
+          "folder": {
+            "description": "Folder holding the message (default INBOX).",
+            "type": "string"
+          },
+          "mark_read": {
+            "default": false,
+            "description": "Set the message's read flag (default false: reading leaves it unread).",
+            "type": "boolean"
+          },
+          "max_chars": {
+            "description": "Most body characters to return (default 20000, at most 200000).",
+            "type": "integer"
+          },
+          "uid": {
+            "description": "UID from search.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uid"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "search",
+      "description": "Search a folder (default INBOX) by from, to, subject, text, date range (since/before,\nYYYY-MM-DD) and unread state. Returns uid, date, from, subject, size and has_attachments,\nnewest first.",
+      "inputSchema": {
+        "properties": {
+          "before": {
+            "description": "Received before this date (YYYY-MM-DD).",
+            "type": "string"
+          },
+          "folder": {
+            "description": "Folder to search (default INBOX). Names as list_folders returns them.",
+            "type": "string"
+          },
+          "from": {
+            "description": "Substring of the From header.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Most messages to return, newest first (default 20, at most 100).",
+            "type": "integer"
+          },
+          "since": {
+            "description": "Received on or after this date (YYYY-MM-DD).",
+            "type": "string"
+          },
+          "subject": {
+            "description": "Substring of the subject.",
+            "type": "string"
+          },
+          "text": {
+            "description": "Substring anywhere in the headers or the body.",
+            "type": "string"
+          },
+          "to": {
+            "description": "Substring of the To header.",
+            "type": "string"
+          },
+          "unseen": {
+            "description": "true: only unread messages; false: only read messages.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "send",
+      "description": "Send a message over SMTP and copy it to the Sent folder. Only works when the server allows\nsending, and only to allowed recipients; otherwise use draft.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "Message body in Markdown (plain text is fine). Sent as text/plain (as written) plus\ntext/html rendered from it; raw HTML is shown as text, images become links.",
+            "type": "string"
+          },
+          "cc": {
+            "default": [],
+            "description": "Cc recipients.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "folder": {
+            "description": "Folder of the in_reply_to message (default INBOX).",
+            "type": "string"
+          },
+          "in_reply_to": {
+            "description": "UID of the message this replies to; sets In-Reply-To and References.",
+            "type": "integer"
+          },
+          "subject": {
+            "description": "Subject (a reply defaults to \"Re: \" plus the original subject).",
+            "type": "string"
+          },
+          "to": {
+            "default": [],
+            "description": "Recipients, `ann@example.org` or `Ann <ann@example.org>`. May be empty for a reply (goes to\nthe original sender).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    }
+  ]
+}

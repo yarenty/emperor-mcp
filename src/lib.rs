@@ -15,7 +15,9 @@
 //! Every server binary also ships a `doctor` subcommand built from [`doctor`] checks.
 //!
 //! Also in the box: [`credentials`] (an upstream `401`/`403` becomes the MCP response's status),
-//! [`limits`] (caps on what a tool returns), and two optional features: `cli` (shared
+//! [`limits`] (caps on what a tool returns), [`schema`] (lean tool definitions: strips JSON
+//! Schema boilerplate from `tools/list`, opt in with `Self::tool_router().compact_schemas()`),
+//! and two optional features: `cli` (shared
 //! `--bind`/`--stdio`/`--allowed-host`/`--allowed-origin` flags, `cli::ServeArgs`) and
 //! `testkit` (tool-list conformance checks for a server's own tests, `testkit::assert_tools`).
 //!
@@ -32,6 +34,7 @@ pub mod doctor;
 pub mod framing;
 pub mod headers;
 pub mod limits;
+pub mod schema;
 pub mod serve;
 #[cfg(feature = "testkit")]
 #[cfg_attr(docsrs, doc(cfg(feature = "testkit")))]
