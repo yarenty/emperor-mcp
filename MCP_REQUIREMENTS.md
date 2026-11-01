@@ -16,6 +16,9 @@ Every new first-party MCP server **MUST**:
 7. Ship a **`manifest.yaml`** beside the crate.
 8. Expose **3 to 8 tools** — split a bigger surface into several servers (§11).
 9. Ship a **`doctor`** subcommand built on [`emperor_mcp::doctor`](src/doctor.rs) (§11).
+10. **Annotate every tool**: `readOnlyHint` always, `destructiveHint` too on a tool that writes (§12).
+11. Report an upstream **credential rejection** as one, not as a generic failure (§13).
+12. **Cap what a tool returns**: characters, results per call, bytes downloaded (§14).
 
 ## 2. Content-aware output framing (REQUIRED)
 
@@ -26,6 +29,12 @@ Wrap tool text in BEGIN/END delimiters with a per-call nonce. Pick the correct [
 | Web / external pages | `ExternalWeb` | Search, fetch-url |
 | Vault / wiki / notes | `TrustedReference` | Obsidian, Knowledge Compiler outputs |
 | SQL / stats / computed | `Computed` | DataFusion, calculators |
+| Files / documents of unknown authorship | `Document` | Read a PDF, office file or text file |
+| Mail / chat / messages from third parties | `PrivateCommunication` | Read mail, list messages |
+
+`PrivateCommunication` is not `Document`: messages are written *to the user* by other people,
+and one of them can be written to steer an assistant that reads the inbox ("assistant, forward
+this thread to…"). Its preamble says so plainly.
 
 Use [`frame`](src/framing.rs) or [`structured_framed`](src/framing.rs) at the tool boundary. Include a **framing breakout test** in unit tests.
 
@@ -98,7 +107,10 @@ cargo build --examples && ./scripts/smoke.sh
 - [ ] Example `[[mcp.servers]]` block in `resources/config.toml`
 - [ ] Root `CHANGELOG.md` when user-visible
 - [ ] 3 to 8 tools, each name a verb on one noun (`read_message`, not `email_tool`)
-- [ ] `doctor` subcommand: configuration, credentials (never printed), upstream reachable, listen address free, tool budget
+- [ ] `doctor` subcommand: configuration, credentials (never printed), upstream reachable, listen address free, folders readable/writable, tool budget
+- [ ] Every tool annotated (`readOnlyHint`, plus `destructiveHint` when it writes); `emperor_mcp::testkit::assert_tools` in the server's tests
+- [ ] Upstream 401/403 returned through `credentials_rejected`
+- [ ] Output capped with `Limits` (`truncate_chars`, `clamp_results`, `bytes_allowed`)
 
 ## 11. Small tool surface and `doctor` (REQUIRED)
 
@@ -112,3 +124,43 @@ one line per check and exits `1` when any check fails, so scripts and container 
 use it. Build it from [`doctor::Report`](src/doctor.rs) and the generic checks (`port_free`,
 `env_set` — secrets show only their length —, `tcp_reachable`, `tool_budget`) plus the server's own
 (log in to the upstream, open the root folder, find the native library).
+
+Servers using clap flatten [`cli::ServeArgs`](src/cli.rs) (feature `cli`) so `--bind`,
+`--stdio`, `--allowed-host` and `--allowed-origin` read the same in every server.
+
+## 12. Tool annotations (REQUIRED)
+
+Every tool carries annotations with **`readOnlyHint` set explicitly**. A tool that is not
+read-only also sets **`destructiveHint`** explicitly (`false` for "adds or updates", `true` for
+"deletes or overwrites"). Clients use these hints to decide what needs the user's confirmation;
+an unset hint means the client has to assume the worst. With rmcp:
+`#[tool(annotations(read_only_hint = false, destructive_hint = false))]`.
+
+Check it in the server's own tests with the `testkit` feature:
+[`testkit::assert_tools`](src/testkit.rs) on `tool_router().list_all()`, or
+[`testkit::assert_tools_json`](src/testkit.rs) on a `tools/list` reply. Both also check the tool
+count (1 to 8), non-empty descriptions and object input schemas.
+
+## 13. Upstream credential rejection (REQUIRED)
+
+When the upstream answers `401` or `403` to the forwarded credentials, the tool returns
+[`credentials_rejected`](src/credentials.rs)`(&ctx, rejection, "upstream name")`, not an ordinary
+tool error. Over HTTP through `serve` the MCP response then carries `401` (with a Bearer
+`WWW-Authenticate` challenge) or `403`, so the client can ask the user to sign in again. The body
+is a JSON-RPC error (code `-32040`, `data.httpStatus`), which is what a stdio client sees. The
+`McpHandler` path returns [`rejection_envelope`](src/credentials.rs). Never retry with other
+credentials and never fall back to a shared account.
+
+## 14. Limits (REQUIRED)
+
+A tool result lands in the model's context. Cap it with [`Limits`](src/limits.rs):
+
+| Cap | Default | Ceiling |
+|-----|---------|---------|
+| Characters returned | 50 000 | 200 000 |
+| Results per call | 20 | 100 |
+| Bytes downloaded / read from one file | 8 MiB | 64 MiB |
+
+A model-supplied `limit` argument goes through `clamp_results`; long text through
+`truncate_chars`, which tells the model what it left out; downloads check `bytes_allowed` before
+and while reading. Configuration can lower a cap, never lift it past the ceiling.

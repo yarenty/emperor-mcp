@@ -114,8 +114,29 @@ Now it stands on its own ice.
 - **Credential forwarding** — [`ForwardedHeaders`](src/headers.rs) for multi-tenant deployments
 - **Host / Origin validation** — off behind a validating ingress, in-process with
   `ServeOptions::with_allowed_hosts` / `with_allowed_origins`
+- **Credential rejection** — [`credentials_rejected`](src/credentials.rs): an upstream `401`/`403`
+  becomes the MCP response's HTTP status, so the client can ask the user to sign in again
+  (a clear JSON-RPC error on stdio)
+- **Limits** — [`Limits`](src/limits.rs): capped characters, results per call and download bytes,
+  with hard ceilings; `truncate_chars` says what it left out
 - **`doctor`** — [`doctor::Report`](src/doctor.rs) and generic checks for each server's `doctor`
-  subcommand, including the 8-tool budget
+  subcommand (listen address, env vars, TCP reachability, readable/writable directories, the
+  8-tool budget)
+- **Optional features** — `cli`: [`ServeArgs`](src/cli.rs) to `#[command(flatten)]` into a
+  server's clap parser (`--bind`, `--stdio`, `--allowed-host`, `--allowed-origin`); `testkit`:
+  [`assert_tools`](src/testkit.rs) for a server's own tests (tool count, descriptions,
+  annotations, object input schemas)
+
+A tool that forwards the caller's credentials and gets refused upstream:
+
+```rust
+use emperor_mcp::{Rejection, credentials_rejected};
+
+// inside a #[tool] returning Result<_, rmcp::model::ErrorData>
+if let Some(rejection) = Rejection::from_status(upstream_status) {
+    return Err(credentials_rejected(&ctx, rejection, "mail server")); // HTTP 401/403 to the client
+}
+```
 
 Two server styles, one set of rules:
 
@@ -159,11 +180,11 @@ any rmcp `ServerHandler`), so you can drop down whenever you need the SDK's full
 ## Build
 
 ```bash
-cargo test                                  # unit + HTTP integration tests
+cargo test --all-features                   # unit + HTTP integration tests
 cargo build --examples && ./scripts/smoke.sh  # example server round-trip
 ```
 
-**MSRV:** Rust 1.85 (edition 2024), declared via `rust-version` in `Cargo.toml`.
+**MSRV:** Rust 1.88 (edition 2024), declared via `rust-version` in `Cargo.toml`.
 
 ## Contributing
 
