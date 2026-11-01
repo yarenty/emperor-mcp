@@ -4,6 +4,16 @@ All notable changes to emperor-mcp. The format follows [Keep a Changelog](https:
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-01
+
+> Lean tool definitions, and writing that the operator switches on.
+
+### Added
+- **`schema` module** - `compact` rewrites a tool's input schema without the boilerplate a model pays for on every request: no `$schema`, no `null` alternative or `"default": null` on optional arguments, no Rust integer formats (`"format": "uint32"`, the `"minimum": 0` they bring), no titles repeating the property name, `$defs` used once inlined and unused ones dropped. Descriptions, enums, `required`, real bounds and non-null defaults stay; the result is valid JSON Schema 2020-12. One-line opt-in: `Self::tool_router().compact_schemas()` (`CompactSchemas`, also on `Vec<Tool>` and `ListToolsResult`); `compact_tool`, `compact_tools`, `compact_list`, `compact_router`, and `compact_output` (keeps `null`) for output schemas. On four servers built on emperor-mcp, `tools/list` shrinks by 14 to 24%.
+- **`testkit`** - `check_read_only_default` / `assert_read_only_default` (and `_json` forms): a server started with no switch lists only read-only tools. `check_compact_schemas` / `assert_compact_schemas`: no `$schema`, no `null` on optional properties. `warnings` / `warnings_json`: tool descriptions over `MAX_DESCRIPTION_CHARS` (300); `assert_tools` prints them without failing.
+- **`cli::parse_switch`** - the start-up switch as a clap `value_parser`: empty, `false`, `0`, `no`, `off` are off; `true`, `1`, `yes`, `on` are on; anything else is refused. The `cli` feature now enables clap's `env` support.
+- **Emperor Profile P1.1** - E11: a tool that changes anything is listed only when the operator switched writing on at start-up (a flag plus an environment variable, falsey = off); no write tool by default. E12: short descriptions that say what the tool does and when to use it rather than another, and compact input schemas. `MCP_REQUIREMENTS.md` §15 and §16.
+
 ## [0.3.0] - 2026-11-01
 
 > Credential rejection the client can act on, output limits, two new frame kinds, and kits for servers' own CLIs and tests.
@@ -41,7 +51,8 @@ All notable changes to emperor-mcp. The format follows [Keep a Changelog](https:
 ### Added
 - Stateless Streamable HTTP transport (`McpHandler`, `serve_http`, stdio for local use), rmcp bootstrap (`serve`), output framing (`FrameKind`), credential forwarding (`ForwardedHeaders`), Emperor Profile P1.
 
-[Unreleased]: https://github.com/yarenty/emperor-mcp/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/yarenty/emperor-mcp/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/yarenty/emperor-mcp/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/yarenty/emperor-mcp/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/yarenty/emperor-mcp/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/yarenty/emperor-mcp/releases/tag/v0.1.0

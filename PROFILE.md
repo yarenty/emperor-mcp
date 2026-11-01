@@ -1,7 +1,7 @@
-# The Emperor Profile — P1
+# The Emperor Profile — P1.1
 
-**Profile version:** P1 · **Written against MCP spec revision:** [2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18)
-· **Applies to:** `emperor-mcp` 0.1.x to 0.3.x
+**Profile version:** P1.1 · **Written against MCP spec revision:** [2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18)
+· **Applies to:** `emperor-mcp` 0.4.x (P1: 0.1.x to 0.3.x)
 
 ## What this is
 
@@ -170,6 +170,48 @@ except transport-level failures, which use HTTP status codes.
   (regression-tested: `http_bad_json_returns_parse_error`); `-32601` demonstrated in
   [`examples/minimal_server.rs`](examples/minimal_server.rs).
 
+## Tools
+
+### E11 — No write tool by default; the operator switches writing on
+
+A tool that changes anything (not read-only) **MUST** be listed only when the operator switched
+writing on at start-up; a server **MUST NOT** offer a write tool by default. Started with no
+switch, every tool in `tools/list` carries `readOnlyHint: true`. The switch **MUST** be a flag
+plus an environment variable of the same meaning (`--writable` and `<SERVER>_WRITABLE`, or a
+narrower verb such as `--allow-send`), and a falsey value is off: unset, empty, `false`, `0`,
+`no`, `off`; an unrecognised value is refused at start-up, never read as on.
+
+- **Rationale:** a model reaches for what it is offered, and a prompt injection reaches for
+  whatever the model can call. Writing is the operator's decision, made once, visibly, at
+  start-up; a tool left out of the list cannot be called by mistake or by an injected
+  instruction, where a listed tool that refuses still invites the attempt. An off-switch
+  (`--read-only`) fails open when it is forgotten; an on-switch fails closed.
+- **Spec relation:** *adds*. The spec lets a server list any tools and offers `readOnlyHint` as
+  an untrusted hint (tools § Tool annotations); it is silent on which tools a server offers by
+  default.
+- **Enforcement:** by code in the server's tests:
+  [`testkit::assert_read_only_default`](src/testkit.rs) on the tool list of a server built with
+  no switch. [`cli::parse_switch`](src/cli.rs) (feature `cli`) reads the switch value.
+
+### E12 — Lean tool definitions
+
+Tool descriptions **SHOULD** be short and say what the tool does, and when to use it rather than
+another tool, with no essays: at most 300 characters for the tool description, a soft limit.
+Input schemas **SHOULD** be compact: no `$schema` URI, no `null` alternative or `"default": null`
+on optional arguments, no Rust integer formats, no `$defs` indirection for a type used once.
+
+- **Rationale:** the model reads every definition on every request, so every byte is paid for
+  many times over, and a long description crowds out the ones that tell tools apart.
+  Generator boilerplate tells the model nothing an absent optional argument does not already
+  say.
+- **Spec relation:** *adds*. The spec requires `inputSchema` to be a JSON Schema object and says
+  nothing about its size. A compact schema is still valid JSON Schema 2020-12; it stops
+  describing only an explicit `null` for an optional argument, which the server treats as absent.
+- **Enforcement:** by code. [`schema::compact`](src/schema.rs) and the one-line router opt-in
+  `Self::tool_router().compact_schemas()`; [`testkit::assert_compact_schemas`](src/testkit.rs)
+  checks the result; [`testkit::assert_tools`](src/testkit.rs) warns (does not fail) above
+  [`MAX_DESCRIPTION_CHARS`](src/testkit.rs). "Says when to use it" is policy.
+
 ---
 
 ## Compliance table
@@ -186,6 +228,8 @@ except transport-level failures, which use HTTP status codes.
 | E8 output framing | adds (spec silent on prompt injection) | code: `framing.rs` + tests; application = policy |
 | E9 clean streams / tracing | restates stdio §; adds structured logging | code direction; tool-code discipline = policy |
 | E10 error envelopes | restates JSON-RPC semantics | code: `transport.rs` + test |
+| E11 no write tool by default | adds (spec silent on default tool sets) | code: `testkit::assert_read_only_default` in the server's tests |
+| E12 lean tool definitions | adds (spec silent on definition size) | code: `schema.rs` + `testkit::assert_compact_schemas`; description length = testkit warning |
 
 ## P2 note: both handshake families on the stateless path
 
@@ -209,12 +253,15 @@ per-request version) is not turned on; P2 decides whether to require it.
 
 ## Profile versioning
 
-- **P1** (this document) is written against spec revision **2025-06-18** — the revision the
+- **P1** (E1 to E10) is written against spec revision **2025-06-18** — the revision the
   underlying SDK path implements (initialization-handshake protocol family, which the current
   spec documents for backward compatibility).
 - The **current** spec revision is [2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28),
   which replaces the initialize handshake with per-request version declaration
   (`MCP-Protocol-Version` header / `_meta`) and a mandatory `server/discover` RPC. **P2** will
   cover that family (the framework is on rmcp 3, which speaks it; the profile text follows).
+- **P1.1** (with `emperor-mcp` 0.4) adds E11 (no write tool by default) and E12 (lean tool
+  definitions) on the same spec revision; E1 to E10 are unchanged.
 - A profile version bump is required whenever a rule is added, removed, or its spec mapping
-  changes. Servers declare the profile they target as "Emperor Profile P1".
+  changes. Servers declare the profile they target as "Emperor Profile P1.1" (or "P1" for a
+  server that does not yet meet E11 and E12).

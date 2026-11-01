@@ -1,6 +1,6 @@
 [package]
 name = "emperor-mcp"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 rust-version = "1.88"
 description = "Opinionated MCP server framework: stateless Streamable HTTP transport, output framing, credential forwarding, rmcp bootstrap"
@@ -42,11 +42,12 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Optional: shared server CLI flags (feature `cli`)
-clap = { version = "4.5", default-features = false, features = ["std", "derive", "help", "usage", "error-context"], optional = true }
+clap = { version = "4.5", default-features = false, features = ["std", "derive", "env", "help", "usage", "error-context"], optional = true }
 
 [features]
 default = []
-# `cli::ServeArgs`: shared --bind / --stdio / --allowed-host / --allowed-origin flags (clap derive).
+# `cli::ServeArgs`: shared --bind / --stdio / --allowed-host / --allowed-origin flags (clap derive);
+# `cli::parse_switch` for start-up switches such as --writable / MY_MCP_WRITABLE.
 cli = ["dep:clap"]
 # `testkit`: tool-list conformance checks for servers' own integration tests.
 testkit = []

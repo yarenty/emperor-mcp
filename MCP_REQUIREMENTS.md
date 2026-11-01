@@ -1,6 +1,6 @@
 # MCP requirements (servers built on emperor-mcp)
 
-> Authoring checklist for MCP servers built on this framework. The normative, versioned ruleset with spec mapping is [PROFILE.md](./PROFILE.md) (Emperor Profile P1); this file is its practical companion.
+> Authoring checklist for MCP servers built on this framework. The normative, versioned ruleset with spec mapping is [PROFILE.md](./PROFILE.md) (Emperor Profile P1.1); this file is its practical companion.
 
 
 ## 1. Summary (the rules)
@@ -19,6 +19,8 @@ Every new first-party MCP server **MUST**:
 10. **Annotate every tool**: `readOnlyHint` always, `destructiveHint` too on a tool that writes (§12).
 11. Report an upstream **credential rejection** as one, not as a generic failure (§13).
 12. **Cap what a tool returns**: characters, results per call, bytes downloaded (§14).
+13. **Offer no write tool by default**: a tool that changes anything (not read-only) is listed only when the operator switched writing on at start-up (§15).
+14. **Keep tool definitions lean**: a short description that says what the tool does and when to use it rather than another tool; compact input schemas (§16).
 
 ## 2. Content-aware output framing (REQUIRED)
 
@@ -111,6 +113,8 @@ cargo build --examples && ./scripts/smoke.sh
 - [ ] Every tool annotated (`readOnlyHint`, plus `destructiveHint` when it writes); `emperor_mcp::testkit::assert_tools` in the server's tests
 - [ ] Upstream 401/403 returned through `credentials_rejected`
 - [ ] Output capped with `Limits` (`truncate_chars`, `clamp_results`, `bytes_allowed`)
+- [ ] No write tool listed without the write switch (`--writable` + `MY_MCP_WRITABLE`); `testkit::assert_read_only_default` on the default tool list
+- [ ] Tool descriptions under 300 characters; router built with `.compact_schemas()`; `testkit::assert_compact_schemas` in the server's tests
 
 ## 11. Small tool surface and `doctor` (REQUIRED)
 
@@ -164,3 +168,45 @@ A tool result lands in the model's context. Cap it with [`Limits`](src/limits.rs
 A model-supplied `limit` argument goes through `clamp_results`; long text through
 `truncate_chars`, which tells the model what it left out; downloads check `bytes_allowed` before
 and while reading. Configuration can lower a cap, never lift it past the ceiling.
+
+## 15. Writing is switched on, never on by default (REQUIRED)
+
+**A tool that changes anything (not read-only) is listed only when the operator switched writing
+on at start-up; a server offers no write tool by default.** Started with no switch, every tool
+in `tools/list` carries `readOnlyHint: true`. Leaving a write tool out of the list is the point:
+a tool that is listed but refuses still invites the model to try it, and a client that trusts
+the list cannot tell. A tool that only reads in its default form (rendering a page without
+saving it) is listed read-only and gains its writing option with the switch.
+
+The switch is a flag plus an environment variable, read once at start-up:
+
+- a flag named for what it allows: `--writable`, or a narrower verb such as `--allow-send`;
+- an environment variable of the same meaning, `<SERVER>_WRITABLE` (e.g. `FOLDER_WRITABLE`), for
+  containers and catalogs that pass parameters as environment;
+- a falsey value is off: unset, empty, `false`, `0`, `no`, `off`. `true`, `1`, `yes`, `on` turn
+  it on; anything else is refused at start-up rather than read as on.
+  [`cli::parse_switch`](src/cli.rs) (feature `cli`) implements exactly this as a clap
+  `value_parser`;
+- `doctor` says which mode the server would start in.
+
+An off-switch (`--read-only`) does not meet this rule: forgetting it must leave a server unable
+to write. Check it with [`testkit::assert_read_only_default`](src/testkit.rs) on the tool list of
+a server built with no switch.
+
+## 16. Lean tool definitions (REQUIRED)
+
+The model reads every tool definition on every request, so each byte is paid for many times.
+
+**Descriptions are short and say what the tool does, and when to use it rather than another
+tool. No essays.** Soft limit: 300 characters for the tool description
+([`testkit::MAX_DESCRIPTION_CHARS`](src/testkit.rs)); `assert_tools` prints a warning above it,
+it does not fail. Parameter descriptions are one line each. Limits, formats and defaults belong
+in the parameter they apply to, not repeated in the tool description.
+
+**Input schemas are compact.** Build the router with
+[`schema::CompactSchemas`](src/schema.rs): `Self::tool_router().compact_schemas()`. It drops
+the `$schema` URI, the `null` alternative and `"default": null` of optional arguments, Rust
+integer formats (`"format": "uint32"`, `"minimum": 0`), titles that repeat the property name,
+and `$defs` indirection for types used once. Descriptions, enums, `required`, real bounds and
+non-null defaults stay. Check it with
+[`testkit::assert_compact_schemas`](src/testkit.rs).
