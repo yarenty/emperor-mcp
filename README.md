@@ -171,6 +171,18 @@ built on it — this is a layer, not an alternative.
 [PROFILE.md](./PROFILE.md); `rmcp` stays fully reachable underneath (the `serve` path takes
 any rmcp `ServerHandler`), so you can drop down whenever you need the SDK's full surface.
 
+## Servers built on emperor-mcp
+
+| Server | What it does |
+|---|---|
+| [emperor-folder](https://github.com/yarenty/emperor-folder) | One or more folders, confined by cap-std: list, read, search, and with `--writable` write, edit, move |
+| [emperor-pdf](https://github.com/yarenty/emperor-pdf) | Read, search, render, merge/extract and create PDFs; flags hidden text |
+| [emperor-mail](https://github.com/yarenty/emperor-mail) | IMAP/SMTP mailbox: search, read, draft; send only when allowed, to listed recipients |
+| [emperor-vikunja](https://github.com/yarenty/emperor-vikunja) | Vikunja tasks: list, read, create, update, comment; `--read-only` |
+
+How they compare with the most popular public MCP servers for the same jobs, and where those
+are better: [docs/COMPARISON.md](docs/COMPARISON.md).
+
 ## Authoring rules
 
 - [`PROFILE.md`](./PROFILE.md) — **the Emperor Profile (P1)**: the versioned deployment profile, rule by rule, with spec mapping and enforcement
