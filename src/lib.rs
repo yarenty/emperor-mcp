@@ -14,18 +14,33 @@
 //!
 //! Every server binary also ships a `doctor` subcommand built from [`doctor`] checks.
 //!
+//! Also in the box: [`credentials`] (an upstream `401`/`403` becomes the MCP response's status),
+//! [`limits`] (caps on what a tool returns), and two optional features: `cli` (shared
+//! `--bind`/`--stdio`/`--allowed-host`/`--allowed-origin` flags, `cli::ServeArgs`) and
+//! `testkit` (tool-list conformance checks for a server's own tests, `testkit::assert_tools`).
+//!
 //! See `MCP_REQUIREMENTS.md` and `MANIFEST_SPEC.md` in the repository root.
 
 #![warn(missing_docs)]
 
+#[cfg(feature = "cli")]
+#[cfg_attr(docsrs, doc(cfg(feature = "cli")))]
+pub mod cli;
+pub mod credentials;
 pub mod doctor;
 pub mod framing;
 pub mod headers;
+pub mod limits;
 pub mod serve;
+#[cfg(feature = "testkit")]
+#[cfg_attr(docsrs, doc(cfg(feature = "testkit")))]
+pub mod testkit;
 pub mod transport;
 
+pub use credentials::{Rejection, credentials_rejected};
 pub use framing::{FrameKind, frame, structured_framed};
 pub use headers::{ForwardConfig, ForwardedHeaders, forward_headers_middleware};
+pub use limits::{Limits, truncate_chars};
 pub use serve::{ServeOptions, serve};
 pub use transport::{ACCEPT_STREAMABLE, McpHandler, http_router, run_stdio, serve_http, wants_sse};
 
