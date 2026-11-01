@@ -43,7 +43,7 @@ pub struct ServeArgs {
     #[arg(long = "allowed-host", value_name = "HOST")]
     pub allowed_hosts: Vec<String>,
 
-    /// Accept only this Origin, with scheme, e.g. https://app.example.com (repeatable).
+    /// Accept only this Origin, with scheme, e.g. `https://app.example.com` (repeatable).
     #[arg(long = "allowed-origin", value_name = "ORIGIN")]
     pub allowed_origins: Vec<String>,
 }
@@ -54,7 +54,7 @@ impl ServeArgs {
         self.bind.unwrap_or(default_bind)
     }
 
-    /// [`ServeOptions`] for [`crate::serve`]: the bind address (`default_bind` when `--bind` was
+    /// [`ServeOptions`] for [`crate::serve()`]: the bind address (`default_bind` when `--bind` was
     /// not given) and the Host/Origin allow-lists. The forwarded-header policy keeps its default
     /// (`Authorization` only); change it with [`ServeOptions::with_forward`].
     pub fn serve_options(&self, default_bind: SocketAddr) -> ServeOptions {

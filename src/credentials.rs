@@ -6,9 +6,9 @@
 //! upstream rejected the credentials" so the **MCP HTTP response itself** carries the status, and
 //! a client can prompt the user to re-authenticate instead of showing a generic failure.
 //!
-//! ## How it flows (rmcp path, [`crate::serve`])
+//! ## How it flows (rmcp path, [`crate::serve()`])
 //!
-//! 1. [`credential_rejection_middleware`] (mounted by [`crate::serve`]) puts an empty,
+//! 1. [`credential_rejection_middleware`] (mounted by [`crate::serve()`]) puts an empty,
 //!    request-scoped slot into the HTTP request's extensions.
 //! 2. rmcp copies the request's [`http::request::Parts`] into the tool's `RequestContext`, so the
 //!    tool reaches the same slot.
@@ -108,7 +108,7 @@ struct RejectionSlot(Arc<OnceLock<Rejection>>);
 /// Record the rejection for this request (when the HTTP middleware runs) and build the JSON-RPC
 /// error the tool returns.
 ///
-/// Over HTTP through [`crate::serve`] the response status becomes `401`/`403`; elsewhere (stdio,
+/// Over HTTP through [`crate::serve()`] the response status becomes `401`/`403`; elsewhere (stdio,
 /// a router without the middleware) the client gets the JSON-RPC error alone.
 pub fn credentials_rejected<R>(
     ctx: &rmcp::service::RequestContext<R>,
@@ -175,7 +175,7 @@ pub(crate) fn apply(rejection: Rejection, response: &mut Response) {
 }
 
 /// Axum middleware that turns a tool's [`credentials_rejected`] into the HTTP status of the MCP
-/// response. [`crate::serve`] mounts it; mount it yourself when you build your own router around
+/// response. [`crate::serve()`] mounts it; mount it yourself when you build your own router around
 /// rmcp's `StreamableHttpService`.
 pub async fn credential_rejection_middleware(mut request: Request, next: Next) -> Response {
     let slot = RejectionSlot::default();
