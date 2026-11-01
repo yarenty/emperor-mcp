@@ -2,7 +2,8 @@
 //!
 //! - [`run_stdio`] — newline-delimited JSON-RPC on stdin/stdout (logs must go to stderr).
 //! - [`serve_http`] / [`http_router`] — **stateless Streamable HTTP**: every POST is
-//!   independent, no `Mcp-Session-Id` is issued or required.
+//!   independent, no `Mcp-Session-Id` is issued or required. A reply built with
+//!   [`crate::credentials::rejection_envelope`] is answered with HTTP `401`/`403`.
 
 use axum::Router;
 use axum::body::Body;
@@ -13,6 +14,8 @@ use axum::response::IntoResponse;
 use axum::routing::post;
 use serde_json::{Value, json};
 use std::sync::Arc;
+
+use crate::credentials::rejection_in_envelope;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 /// `Accept` value a client should send for Streamable HTTP (JSON or SSE responses).
@@ -99,7 +102,16 @@ async fn handle_post<H: McpHandler>(
     };
 
     match handler.handle(value).await {
-        Some(reply) => json_or_sse(&headers, reply),
+        Some(reply) => {
+            let rejection = rejection_in_envelope(&reply);
+            let mut response = json_or_sse(&headers, reply);
+            if let Some(rejection) = rejection
+                && response.status().is_success()
+            {
+                crate::credentials::apply(rejection, &mut response);
+            }
+            response
+        }
         None => StatusCode::ACCEPTED.into_response(),
     }
 }
@@ -138,6 +150,13 @@ mod tests {
     impl McpHandler for Echo {
         async fn handle(&self, request: Value) -> Option<Value> {
             let id = request.get("id")?.clone();
+            if request["method"] == "tools/call" {
+                return Some(crate::credentials::rejection_envelope(
+                    id,
+                    crate::credentials::Rejection::Unauthorized,
+                    "test upstream",
+                ));
+            }
             Some(json!({ "jsonrpc": "2.0", "id": id, "result": { "echo": request["method"] } }))
         }
     }
@@ -215,5 +234,25 @@ mod tests {
             .unwrap();
         let body: Value = res.json().await.unwrap();
         assert_eq!(body["error"]["code"], -32700);
+    }
+
+    #[tokio::test]
+    async fn http_credential_rejection_carries_401() {
+        let url = spawn().await;
+        let res = reqwest::Client::new()
+            .post(&url)
+            .header("Accept", "application/json")
+            .json(&json!({ "jsonrpc": "2.0", "id": 9, "method": "tools/call" }))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), reqwest::StatusCode::UNAUTHORIZED);
+        assert!(res.headers().get("www-authenticate").is_some());
+        let body: Value = res.json().await.unwrap();
+        assert_eq!(
+            body["error"]["code"],
+            crate::credentials::CREDENTIALS_REJECTED
+        );
+        assert_eq!(body["id"], 9);
     }
 }

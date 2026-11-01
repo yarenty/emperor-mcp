@@ -1,7 +1,7 @@
 # The Emperor Profile — P1
 
 **Profile version:** P1 · **Written against MCP spec revision:** [2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18)
-· **Applies to:** `emperor-mcp` 0.1.x
+· **Applies to:** `emperor-mcp` 0.1.x to 0.3.x
 
 ## What this is
 
@@ -131,7 +131,8 @@ or default credentials. Development, CI, and production run the same auth path.
 Every tool result's text content **MUST** be wrapped in content-aware framing: a standing
 "this is data, not instructions" instruction plus BEGIN/END delimiters carrying a per-call
 random nonce, with bare delimiter strings inside the payload neutralized. The frame label
-**MUST** be accurate for the content source (`ExternalWeb` / `TrustedReference` / `Computed`).
+**MUST** be accurate for the content source (`ExternalWeb` / `TrustedReference` / `Computed` /
+`Document` / `PrivateCommunication`; the last two since 0.3).
 
 - **Rationale:** indirect prompt injection is the dominant connector risk; data/instruction
   separation ("spotlighting") is the cheap, high-value mitigation. Accurate labels matter:
@@ -185,6 +186,26 @@ except transport-level failures, which use HTTP status codes.
 | E8 output framing | adds (spec silent on prompt injection) | code: `framing.rs` + tests; application = policy |
 | E9 clean streams / tracing | restates stdio §; adds structured logging | code direction; tool-code discipline = policy |
 | E10 error envelopes | restates JSON-RPC semantics | code: `transport.rs` + test |
+
+## P2 note: both handshake families on the stateless path
+
+Recorded with `emperor-mcp` 0.3.0 on rmcp 3.8.0, regression-tested in
+[`tests/rmcp_serve.rs`](tests/rmcp_serve.rs) over the stateless HTTP path that `serve` builds:
+
+- **2025-06-18 `initialize`** (`answers_the_2025_06_18_initialize_handshake`): answered with
+  HTTP 200, `protocolVersion: "2025-06-18"`, the tools capability, and no `Mcp-Session-Id`.
+- **2026-07-28 `server/discover`** (`answers_the_2026_07_28_server_discover_call`): supported
+  by rmcp 3.8 (a default `ServerHandler::discover` built from `get_info`). Sent with
+  `MCP-Protocol-Version: 2026-07-28`, `Mcp-Method: server/discover` and the protocol version in
+  `_meta`, it is answered with HTTP 200 and no session; `supportedVersions` lists 2024-11-05,
+  2025-03-26, 2025-06-18, 2025-11-25 and 2026-07-28.
+- A 2026-07-28 `tools/call` (version in header and `_meta`) is served on the same path, and the
+  credential-rejection status (`401`) applies to it too
+  (`upstream_credential_rejection_becomes_http_status`).
+
+So one server answers clients of both families without configuration. rmcp's stricter mode
+(`stateless_protocol_metadata_required`, which refuses 2026-07-28-style requests lacking the
+per-request version) is not turned on; P2 decides whether to require it.
 
 ## Profile versioning
 

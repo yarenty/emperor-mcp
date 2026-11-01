@@ -5,6 +5,8 @@
 //!   * the rmcp `StreamableHttpService` mounted at `/mcp`,
 //!   * the [`super::headers::forward_headers_middleware`] that captures
 //!     per-user credential headers for forwarding,
+//!   * the [`super::credentials::credential_rejection_middleware`] that turns a tool's
+//!     "upstream rejected the credentials" into a `401`/`403` response,
 //!   * a `/health` endpoint,
 //!   * graceful shutdown on Ctrl-C / cancellation.
 //!
@@ -17,6 +19,7 @@ use rmcp::transport::streamable_http_server::session::local::LocalSessionManager
 use rmcp::transport::streamable_http_server::tower::StreamableHttpService;
 use tokio_util::sync::CancellationToken;
 
+use crate::credentials::credential_rejection_middleware;
 use crate::headers::{ForwardConfig, forward_headers_middleware};
 
 const LEGACY_SESSION_MODE: bool = false;
@@ -84,7 +87,9 @@ impl ServeOptions {
 ///
 /// Per-user credential headers named in `options.forward` are captured by
 /// middleware and made available to tool handlers via
-/// [`crate::headers::ForwardedHeaders::from_request_context`].
+/// [`crate::headers::ForwardedHeaders::from_request_context`]. A tool that gets `401`/`403`
+/// from the upstream returns [`crate::credentials::credentials_rejected`], and the MCP response
+/// carries that status.
 pub async fn serve<H, F>(options: ServeOptions, make_handler: F) -> anyhow::Result<()>
 where
     H: ServerHandler + Send + 'static,
@@ -123,6 +128,7 @@ where
     let app = axum::Router::new()
         .route("/health", axum::routing::get(health))
         .nest_service("/mcp", service)
+        .layer(axum::middleware::from_fn(credential_rejection_middleware))
         .layer(axum::middleware::from_fn_with_state(
             options.forward.clone(),
             forward_headers_middleware,
