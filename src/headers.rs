@@ -84,10 +84,10 @@ impl ForwardedHeaders {
             return fwd.clone();
         }
         // 2. Through the injected HTTP request Parts (the streamable-HTTP path).
-        if let Some(parts) = ctx.extensions.get::<http::request::Parts>() {
-            if let Some(fwd) = parts.extensions.get::<ForwardedHeaders>() {
-                return fwd.clone();
-            }
+        if let Some(parts) = ctx.extensions.get::<http::request::Parts>()
+            && let Some(fwd) = parts.extensions.get::<ForwardedHeaders>()
+        {
+            return fwd.clone();
         }
         Self::default()
     }

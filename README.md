@@ -112,6 +112,10 @@ Now it stands on its own ice.
 - **rmcp bootstrap** — [`serve`](src/serve.rs) at `/mcp` + `/health`, graceful shutdown
 - **Output framing** — [`FrameKind`](src/framing.rs) / prompt-injection mitigation
 - **Credential forwarding** — [`ForwardedHeaders`](src/headers.rs) for multi-tenant deployments
+- **Host / Origin validation** — off behind a validating ingress, in-process with
+  `ServeOptions::with_allowed_hosts` / `with_allowed_origins`
+- **`doctor`** — [`doctor::Report`](src/doctor.rs) and generic checks for each server's `doctor`
+  subcommand, including the 8-tool budget
 
 Two server styles, one set of rules:
 

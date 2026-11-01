@@ -1,6 +1,6 @@
 # emperor-mcp — AI agent notes
 
-**Crate**: `emperor-mcp` · **Version**: 0.1.0 (on crates.io) · **Licence**: MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`; keep `Cargo.toml`, the README badge and the licence section in agreement; contributions are signed off, see `CONTRIBUTING.md`)
+**Crate**: `emperor-mcp` · **Version**: 0.2.0 (0.1.0 on crates.io) · **Licence**: MIT OR Apache-2.0 (`LICENSE-MIT`, `LICENSE-APACHE`; keep `Cargo.toml`, the README badge and the licence section in agreement; contributions are signed off, see `CONTRIBUTING.md`)
 
 ## Scope
 
@@ -18,6 +18,7 @@ are the reference consumers.
 | `serve` | rmcp `ServerHandler` bootstrap (`/mcp`, `/health`) with credential forwarding |
 | `framing` | `FrameKind`, `frame`, `structured_framed` |
 | `headers` | `ForwardConfig`, `ForwardedHeaders`, middleware |
+| `doctor` | `Report`, `Check`, `port_free`, `env_set`, `tcp_reachable`, `tool_budget` (`MAX_TOOLS` = 8) |
 
 ## Before you change code
 
@@ -33,7 +34,7 @@ are the reference consumers.
 - **Streamable HTTP in production** — stdio stays a local/dev transport.
 - `#![warn(missing_docs)]` is on: every public item stays documented.
 - Single logging facade: `tracing` (never add `log`).
-- **MSRV 1.85** (edition 2024) — declared in `Cargo.toml`; bumping it is a semver-relevant decision.
+- **rmcp 3.x**; **MSRV 1.88** (edition 2024, rmcp 3's own minimum) — declared in `Cargo.toml`; bumping it is a semver-relevant decision.
 
 ## Documentation closure
 

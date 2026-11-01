@@ -12,10 +12,13 @@
 //! 2. **[`serve::serve`]** — rmcp `ServerHandler` + `#[tool_router]` bootstrap at `/mcp` + `/health`,
 //!    with credential-forwarding middleware for multi-tenant deployments.
 //!
+//! Every server binary also ships a `doctor` subcommand built from [`doctor`] checks.
+//!
 //! See `MCP_REQUIREMENTS.md` and `MANIFEST_SPEC.md` in the repository root.
 
 #![warn(missing_docs)]
 
+pub mod doctor;
 pub mod framing;
 pub mod headers;
 pub mod serve;
@@ -26,13 +29,14 @@ pub use headers::{ForwardConfig, ForwardedHeaders, forward_headers_middleware};
 pub use serve::{ServeOptions, serve};
 pub use transport::{ACCEPT_STREAMABLE, McpHandler, http_router, run_stdio, serve_http, wants_sse};
 
-/// Initialise tracing/logging with an `RUST_LOG`-configurable filter, defaulting to `info`.
+/// Initialise tracing/logging to stderr (stdout stays clean for the stdio transport) with an
+/// `RUST_LOG`-configurable filter, defaulting to `info`.
 pub fn init_tracing() {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
     let _ = tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
         .try_init();
 }
