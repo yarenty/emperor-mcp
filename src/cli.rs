@@ -22,6 +22,25 @@
 //! assert_eq!(options.bind.port(), 8017);
 //! assert_eq!(options.allowed_hosts, ["mcp.example.com"]);
 //! ```
+//!
+//! A server that can change things offers its writing tools only when the operator switches
+//! writing on at start-up (Emperor Profile E11): a flag plus an environment variable, read with
+//! [`parse_switch`] so an empty or falsey value leaves writing off:
+//!
+//! ```
+//! use clap::{ArgAction, Parser};
+//! use emperor_mcp::cli::parse_switch;
+//!
+//! #[derive(Parser)]
+//! struct Cli {
+//!     /// Offer the write tools (default: read-only, they are not listed).
+//!     #[arg(long, env = "MY_MCP_WRITABLE", action = ArgAction::SetTrue, value_parser = parse_switch)]
+//!     writable: bool,
+//! }
+//!
+//! assert!(!Cli::parse_from(["my-mcp"]).writable);
+//! assert!(Cli::parse_from(["my-mcp", "--writable"]).writable);
+//! ```
 
 use std::net::SocketAddr;
 
@@ -61,6 +80,19 @@ impl ServeArgs {
         ServeOptions::new(self.bind_or(default_bind))
             .with_allowed_hosts(self.allowed_hosts.iter().cloned())
             .with_allowed_origins(self.allowed_origins.iter().cloned())
+    }
+}
+
+/// An on/off start-up switch from the environment, for a clap `value_parser`.
+///
+/// Off: empty (a catalog passing an unset parameter as `MY_MCP_WRITABLE=`), `false`, `0`, `no`,
+/// `off`, `n`, `f`. On: `true`, `1`, `yes`, `on`, `y`, `t`. Case and surrounding spaces are
+/// ignored. Anything else is refused, so a typo stops the server instead of switching writing on.
+pub fn parse_switch(value: &str) -> Result<bool, String> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "" | "false" | "0" | "no" | "off" | "n" | "f" => Ok(false),
+        "true" | "1" | "yes" | "on" | "y" | "t" => Ok(true),
+        other => Err(format!("expected true/false, 1/0 or yes/no, got {other:?}")),
     }
 }
 
@@ -113,5 +145,17 @@ mod tests {
         assert!(parse(&["--stdio", "--bind", "127.0.0.1:1"]).is_err());
         assert!(parse(&["--stdio", "--allowed-host", "x"]).is_err());
         assert!(parse(&["--bind", "not-an-address"]).is_err());
+    }
+
+    #[test]
+    fn switch_values() {
+        for off in ["", " ", "false", "0", "No", "OFF", "n", "f"] {
+            assert_eq!(parse_switch(off), Ok(false), "{off:?}");
+        }
+        for on in ["true", "1", "YES", " on ", "y", "T"] {
+            assert_eq!(parse_switch(on), Ok(true), "{on:?}");
+        }
+        assert!(parse_switch("maybe").is_err());
+        assert!(parse_switch("2").is_err());
     }
 }
