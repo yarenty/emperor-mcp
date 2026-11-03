@@ -17,7 +17,7 @@ Then teams started deploying those servers in real infrastructure, and a pattern
 The demo works; production doesn't. Not because MCP is broken — because it is *open*. The
 spec deliberately leaves choices to implementers: two standard transports, optional sessions,
 optional auth, no opinion on how tool output should be presented to a model. Openness is
-exactly right for a specification. But in an enterprise deployment, every open choice is a
+exactly right for a specification. But in a production deployment, every open choice is a
 place where two systems disagree at 3 a.m.:
 
 - A server that only speaks **stdio** is a subprocess, not a service. No lifecycle, no
@@ -74,7 +74,7 @@ happily mistake for instructions.
 The MCP spec leaves those choices open — rightly, it's a spec. But someone has to close them
 per deployment, and "every team differently" is how 3 a.m. incidents happen.
 
-So I wrote the choices down and shipped them as code: **emperor-mcp** — an enterprise MCP
+So I wrote the choices down and shipped them as code: **emperor-mcp** — an MCP
 server framework for Rust.
 
 🐧 Stateless Streamable HTTP (no session affinity, ever)

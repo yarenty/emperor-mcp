@@ -7,7 +7,7 @@
 
 The [Model Context Protocol](https://modelcontextprotocol.io) deliberately leaves choices open:
 two standard transports, optional sessions, optional auth, no opinion on how tool output is
-presented to a model. Openness is right for a spec. In an enterprise deployment, every open
+presented to a model. Openness is right for a spec. In a production deployment, every open
 choice is a place where two systems disagree in production.
 
 This document closes those choices. It is a **deployment profile on top of the MCP
@@ -87,7 +87,7 @@ Development servers **SHOULD** bind `127.0.0.1`. Production deployments **MUST**
 trusted ingress (gateway / reverse proxy) that terminates TLS, authenticates the caller, and
 enforces `Origin` validation against DNS-rebinding.
 
-- **Rationale:** the framework targets gateway-fronted enterprise deployments; the ingress is
+- **Rationale:** the framework targets gateway-fronted deployments; the ingress is
   the policy enforcement point.
 - **Spec relation:** *restates* the spec's Security Warning (Origin validation **MUST**,
   localhost binding **SHOULD**, authentication **SHOULD**) and *narrows* it into a concrete
@@ -149,7 +149,7 @@ On stdio, `stdout` **MUST** carry only protocol messages and logs **MUST** go to
 HTTP, logging **MUST** go through the `tracing` facade.
 
 - **Rationale:** one stray `println!` corrupts a stdio protocol stream; unstructured logs are
-  invisible to enterprise log pipelines.
+  invisible to log pipelines.
 - **Spec relation:** *restates* the stdio requirements (transports § stdio); *adds* the
   structured-logging requirement.
 - **Enforcement:** by code direction — [`run_stdio`](src/transport.rs) writes only protocol to
