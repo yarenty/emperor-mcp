@@ -5,7 +5,7 @@
 [![docs.rs](https://img.shields.io/docsrs/emperor-mcp)](https://docs.rs/emperor-mcp)
 [![license](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 
-**The enterprise MCP server framework for Rust — Streamable HTTP first, credential forwarding,
+**The MCP server framework for Rust — Streamable HTTP first, credential forwarding,
 audited framing.**
 
 Built for teams putting [Model Context Protocol](https://modelcontextprotocol.io) servers into
@@ -98,7 +98,7 @@ rules are strict and everyone follows them.
 
 That is exactly the stance this framework takes on running MCP servers in production. The
 spec deliberately leaves many choices open — transports, session handling, credential passing.
-Openness is right for a spec; in an enterprise deployment, every open choice is a place two
+Openness is right for a spec; in a production deployment, every open choice is a place two
 systems disagree at 3 a.m. `emperor-mcp` closes those choices with one opinionated, fully
 spec-compliant profile — and like the huddle, none of it contradicts the wider colony.
 
